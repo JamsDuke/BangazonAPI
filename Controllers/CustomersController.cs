@@ -34,7 +34,7 @@ namespace WebAPIApplication.Controllers
       return Ok(customers);
     }
 
-    // GET api/values/5
+    // GET api/customers/5
     [HttpGet("{id}", Name = "GetCustomer")]
     public IActionResult Get([FromRoute] int id)
     {
@@ -91,14 +91,57 @@ namespace WebAPIApplication.Controllers
 
     // PUT api/values/5
     [HttpPut("{id}")]
-    public void Put(int id, [FromBody]string value)
+    public IActionResult Put([FromRoute]int id, [FromBody] Customer customer)
     {
+      if (id != customer.CustomerId)
+      {
+        return BadRequest(ModelState);
+      }
+      if (!ModelState.IsValid)
+      {
+        return BadRequest(ModelState);
+      }
+
+      context.Customer.Update(customer);
+      try
+      {
+        context.SaveChanges();
+
+        if (customer == null)
+        {
+          return NotFound();
+        }
+
+        return Ok(customer);
+      }
+      
+      catch (System.InvalidOperationException ex)
+      {
+        return NotFound();
+      }
     }
 
     // DELETE api/values/5
     [HttpDelete("{id}")]
-    public void Delete(int id)
+    public IActionResult Delete([FromRoute]int id)
     {
+      Customer customer = context.Customer.Single(m => m.CustomerId == id);
+
+      if (customer == null)
+      {
+        return NotFound();
+      }
+
+      try
+      {
+        context.Customer.Remove(customer);
+        context.SaveChanges();
+        return Ok(customer);
+      }
+      catch (System.InvalidOperationException ex)
+      {
+        return NotFound();
+      }
     }
     private bool CustomerExists(int id)
     {
